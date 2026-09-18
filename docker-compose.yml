@@ -1,0 +1,87 @@
+services:
+  gateway:
+    build: ./gateway
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+    ports:
+      - "8000:8000"
+    labels:
+      - "spire-workload=gateway"
+    volumes:
+      - spire-agent-socket:/tmp/spire-agent/public
+      - access-log:/var/log/access
+
+  itdr:
+    build: ./itdr
+    ports:
+      - "8003:8000"
+    volumes:
+      - access-log:/var/log/access
+    
+  resource-api:
+    build: ./resource-api
+    labels:
+      - "spire-workload=resource-api"
+    volumes:
+      - spire-agent-socket:/tmp/spire-agent/public
+   
+      
+  token-service:
+    build: ./token-service
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+    ports:
+      - "8001:8000"
+    labels:
+      - "spire-workload=token-service"
+
+  opa:
+    image: openpolicyagent/opa:latest
+    command: ["run", "--server", "--addr=0.0.0.0:8181", "/policies"]
+    volumes:
+      - ./opa/policies:/policies
+    ports:
+      - "8181:8181"
+    labels:
+      - "spire-workload=opa"
+
+
+  approval-service:
+    build: ./approval-service
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+    ports:
+      - "8002:8000"
+    labels:
+      - "spire-workload=approval-service"
+    
+
+
+  spire-server:
+    image: ghcr.io/spiffe/spire-server:1.9.0
+    volumes:
+      - ./spire/server:/run/spire/config
+      - spire-server-data:/run/spire/data
+    ports:
+      - "8081:8081"
+    command: ["-config", "/run/spire/config/server.conf"]
+  
+  spire-agent:
+    image: ghcr.io/spiffe/spire-agent:1.9.0
+    volumes:
+      - ./spire/agent:/run/spire/config
+      - spire-agent-data:/run/spire/data
+      - spire-agent-socket:/tmp/spire-agent/public
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: ["-config", "/run/spire/config/agent.conf", "-joinToken", "2935fb04-568b-4767-b1bd-85983891f651"]
+    depends_on:
+      - spire-server
+
+
+volumes:
+  spire-server-data:
+  spire-agent-data:
+  spire-agent-socket:
+  access-log:
+
+
