@@ -54,6 +54,8 @@ services:
       - "8002:8000"
     labels:
       - "spire-workload=approval-service"
+    volumes:
+      - approval-db:/data
     
 
 
@@ -83,5 +85,6 @@ volumes:
   spire-agent-data:
   spire-agent-socket:
   access-log:
+  approval-db:
 
 
