@@ -14,6 +14,12 @@ def records():
         {"name": "Grace Hopper",   "email": "grace@example.com", "ssn": "777-88-9999"},
     ])
 
+
+
+@app.route("/delete-records", methods=["GET"])
+def delete_records():
+    return jsonify({"status": "records deleted (simulated)"})
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)
 
